@@ -72,8 +72,7 @@
                 - inventory_net
 
             api:
-              # Placeholder: cambia esta imagen por tu backend NestJS cuando esté listo
-              image: nginxdemos/hello
+              image: mamota/inventory-backend:dev
               container_name: dev-inventory-api
               restart: unless-stopped
               environment:
@@ -83,14 +82,13 @@
                 DB_USER: "{{ db_user }}"
                 DB_PASSWORD: "{{ db_password }}"
               ports:
-                - "3000:80"
+                - "3000:3000"
               depends_on:
                 - postgres
               networks:
                 - inventory_net
 
             frontend:
-              # Placeholder: cambia esta imagen por tu frontend (React/Vue/etc) cuando esté listo
               image: nginx:alpine
               container_name: dev-inventory-frontend
               restart: unless-stopped
