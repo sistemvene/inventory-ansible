@@ -1,0 +1,40 @@
+- name: Preparar servidor de desarrollo para la app de inventario
+  hosts: all
+  become: true
+
+  vars:
+    paquetes_base:
+      - ca-certificates
+      - curl
+      - gnupg
+      - python3
+      - python3-apt
+      - git
+
+  tasks:
+    - name: Actualizar índices de APT
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Instalar paquetes base
+      apt:
+        name: "{{ paquetes_base }}"
+        state: present
+
+    - name: Instalar Docker desde los repos de Ubuntu
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Asegurar que el servicio Docker está habilitado y arrancado
+      service:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Añadir usuario ansible al grupo docker
+      user:
+        name: ansible
+        groups: docker
+        append: true
