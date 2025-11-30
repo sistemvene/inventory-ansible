@@ -1,0 +1,84 @@
+- name: Desplegar stack PostgreSQL + pgAdmin para entorno DEV
+  hosts: all
+  become: true
+
+  vars:
+    app_base_dir: /opt/dev-app-inventory
+    stack_dir: "{{ app_base_dir }}/postgres_stack"
+    db_name: inventorydb
+    db_user: inventory_user
+    db_password: "Inv3ntoryDev!"
+    pgadmin_email: "admin@example.com"
+    pgadmin_password: "PgAdminDev!"
+
+  tasks:
+    - name: Crear directorio base de la app
+      file:
+        path: "{{ app_base_dir }}"
+        state: directory
+        owner: ansible
+        group: ansible
+        mode: "0755"
+
+    - name: Crear directorio para el stack PostgreSQL
+      file:
+        path: "{{ stack_dir }}"
+        state: directory
+        owner: ansible
+        group: ansible
+        mode: "0755"
+
+    - name: Instalar docker-compose
+      apt:
+        name: docker-compose
+        state: present
+        update_cache: yes
+
+    - name: Crear docker-compose.yml para Postgres + pgAdmin
+      copy:
+        dest: "{{ stack_dir }}/docker-compose.yml"
+        owner: ansible
+        group: ansible
+        mode: "0644"
+        content: |
+          version: "3.9"
+
+          services:
+            postgres:
+              image: postgres:15
+              container_name: dev-inventory-postgres
+              restart: unless-stopped
+              environment:
+                POSTGRES_DB: "{{ db_name }}"
+                POSTGRES_USER: "{{ db_user }}"
+                POSTGRES_PASSWORD: "{{ db_password }}"
+              volumes:
+                - postgres_data:/var/lib/postgresql/data
+              networks:
+                - inventory_net
+
+            pgadmin:
+              image: dpage/pgadmin4:8
+              container_name: dev-inventory-pgadmin
+              restart: unless-stopped
+              environment:
+                PGADMIN_DEFAULT_EMAIL: "{{ pgadmin_email }}"
+                PGADMIN_DEFAULT_PASSWORD: "{{ pgadmin_password }}"
+              ports:
+                - "5050:80"
+              depends_on:
+                - postgres
+              networks:
+                - inventory_net
+
+          volumes:
+            postgres_data:
+
+          networks:
+            inventory_net:
+              driver: bridge
+
+    - name: Levantar stack con docker-compose
+      command: docker-compose -f docker-compose.yml up -d
+      args:
+        chdir: "{{ stack_dir }}"
