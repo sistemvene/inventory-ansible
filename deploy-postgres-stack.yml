@@ -1,4 +1,4 @@
-- name: Desplegar stack PostgreSQL + pgAdmin para entorno DEV
+- name: Desplegar stack PostgreSQL + pgAdmin + API + Frontend para entorno DEV
   hosts: all
   become: true
 
@@ -34,7 +34,7 @@
         state: present
         update_cache: yes
 
-    - name: Crear docker-compose.yml para Postgres + pgAdmin
+    - name: Crear docker-compose.yml para Postgres + pgAdmin + API + Frontend
       copy:
         dest: "{{ stack_dir }}/docker-compose.yml"
         owner: ansible
@@ -68,6 +68,36 @@
                 - "5050:80"
               depends_on:
                 - postgres
+              networks:
+                - inventory_net
+
+            api:
+              # Placeholder: cambia esta imagen por tu backend NestJS cuando esté listo
+              image: nginxdemos/hello
+              container_name: dev-inventory-api
+              restart: unless-stopped
+              environment:
+                DB_HOST: postgres
+                DB_PORT: 5432
+                DB_NAME: "{{ db_name }}"
+                DB_USER: "{{ db_user }}"
+                DB_PASSWORD: "{{ db_password }}"
+              ports:
+                - "3000:80"
+              depends_on:
+                - postgres
+              networks:
+                - inventory_net
+
+            frontend:
+              # Placeholder: cambia esta imagen por tu frontend (React/Vue/etc) cuando esté listo
+              image: nginx:alpine
+              container_name: dev-inventory-frontend
+              restart: unless-stopped
+              ports:
+                - "8080:80"
+              depends_on:
+                - api
               networks:
                 - inventory_net
 
